@@ -1,0 +1,6 @@
+seaborn==0.10.1
+shapely==1.7.1
+setproctitle==1.1.10
+adabelief-pytorch==0.0.5
+iopath==0.1.9
+beautifulsoup4==4.10.0

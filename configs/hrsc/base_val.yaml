@@ -1,0 +1,5 @@
+_BASE_: "base.yaml"
+
+DATASETS:
+  TRAIN: ("hrsc_train",)
+  TEST: ("hrsc_val",)
