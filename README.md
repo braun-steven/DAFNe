@@ -31,13 +31,19 @@ NVIDIA_VISIBLE_DEVICES=0,1,2,3 ./tools/plain_train_net.py --num-gpus 4 --config-
 
 | Dataset  | mAP   | Config                                                          | Weights                                    |
 |----------|-------|-----------------------------------------------------------------|--------------------------------------------|
-| HRSC2016 | 87.76 | [hrsc_r101_ms](./configs/pre-trained/hrsc_r101_ms.yaml)         | [hrsc-ms.pth](weights/hrsc-ms.pth)         |
-| DOTA 1.0 | 76.95 | [dota-1.0_r101_ms](./configs/pre-trained/dota-1.0_r101_ms.yaml) | [dota-1.0-ms.pth](weights/dota-1.0_ms.pth) |
-| DOTA 1.5 | 71.99 | [dota-1.5_r101_ms](./configs/pre-trained/dota-1.5_r101_ms.yaml) | [dota-1.5-ms.pth](weights/dota-1.5_ms.pth) |
+| HRSC2016 | 87.76 | [hrsc_r101_ms](./configs/pre-trained/hrsc_r101_ms.yaml)         | [hrsc-ms.pth](https://drive.google.com/file/d/1mzqcPTADlLpOJCTSanaweG-mgAbHtSOX/view?usp=sharing)         |
+| DOTA 1.0 | 76.95 | [dota-1.0_r101_ms](./configs/pre-trained/dota-1.0_r101_ms.yaml) | [dota-1.0-ms.pth](https://drive.google.com/file/d/1-lgSLhKQSZBogI2YD0r64wjJV6k2xL4E/view?usp=sharing) |
+| DOTA 1.5 | 71.99 | [dota-1.5_r101_ms](./configs/pre-trained/dota-1.5_r101_ms.yaml) | [dota-1.5-ms.pth](https://drive.google.com/file/d/1MQbTngieoWh-DcJL-z55RnI3PUNeSvBv/view?usp=sharing) |
 
 
-### Pre-Trained Weights Usage
+### Pre-Trained Weights Usage with Docker
 
 ``` bash
 ./tools/run.py --gpus 0 --config-file <CONFIG_PATH> --opts "MODEL.WEIGHTS <WEIGHTS_PATH>"
+```
+
+### Pre-Trained Weights Usage without Docker
+
+``` bash
+NVIDIA_VISIBLE_DEVICES=0 ./tools/plain_train_net.py --num-gpus 1 --config-file <CONFIG_PATH> MODEL.WEIGHTS <WEIGHTS_PATH>
 ```
