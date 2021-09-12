@@ -18,9 +18,7 @@ RUN pip install tensorboard
 
 RUN pip install 'git+https://github.com/facebookresearch/fvcore'
 # install detectron2
-# RUN git clone https://github.com/facebookresearch/detectron2 detectron2_repo
-# Get detectron2 fork with cuda device fix
-RUN wget https://github.com/steven-lang/detectron2/archive/0cfbbb6.zip -O detectron2.zip && unzip detectron2.zip && mv detectron2-* detectron2_repo
+RUN git clone https://github.com/facebookresearch/detectron2 detectron2_repo
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
