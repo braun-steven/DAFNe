@@ -2,7 +2,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from detectron2.data import transforms as T
 from detectron2.data.transforms.augmentation_impl import RandomContrast, RandomLighting, ResizeShortestEdge
-from dafne.data.datasets.dota import DotaDatasetMapper
+from dafne.data.datasets.dafne_dataset_mapper import DAFNeDatasetMapper
 import argparse
 import os
 from itertools import chain
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         sample_style = cfg.INPUT.MIN_SIZE_TRAIN_SAMPLING
         resize_aug = T.ResizeShortestEdge(min_size, max_size, sample_style)
 
-        mapper = DotaDatasetMapper(
+        mapper = DAFNeDatasetMapper(
             cfg,
             is_train=True,
             use_instance_mask=True,
