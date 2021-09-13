@@ -1,5 +1,7 @@
 # DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection
 
+<img src="./res/header.png"/>
+
 ## Docker Setup
 
 Use the `Dockerfile` to build the necessary docker image:
