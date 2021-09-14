@@ -2,7 +2,7 @@
 
 <img src="./res/header.png"/>
 
-Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection](TODO).
+Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection](https://arxiv.org/abs/2109.06148).
 
 ## Datasets
 
@@ -60,7 +60,14 @@ NVIDIA_VISIBLE_DEVICES=0 ./tools/plain_train_net.py --num-gpus 1 --config-file <
 ## Cite
 
 ``` bibtex
-TODO
+@misc{lang2021dafne,
+      title={DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection}, 
+      author={Steven Lang and Fabrizio Ventola and Kristian Kersting},
+      year={2021},
+      eprint={2109.06148},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
 ```
 
 
