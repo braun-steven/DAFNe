@@ -98,6 +98,11 @@ def parse_args():
         default=1.0
     )
     parser.add_argument(
+        "--data-dir",
+        help="Set the (host) data directory.",
+        default=joinpath(os.environ["HOME"], "data")
+    )
+    parser.add_argument(
         "--output-dir",
         help="Set a fixed output directory. If None is given, a new one will be generated.",
     )
@@ -195,7 +200,8 @@ def get_docker_volumes():
     pwd = os.getcwd()
 
     home_dir = os.environ["HOME"]
-    data_dir = joinpath(home_dir, "data")
+    data_dir = ARGS.data_dir
+    assert os.path.isdir(data_dir), f"Argument --data-dir ({ARGS.data_dir}) is not a valid directory."
     models_dir = joinpath(home_dir, "models")
     results_dir = get_results_dir()
     model_cache_dir = get_main_model_cache_dir()
