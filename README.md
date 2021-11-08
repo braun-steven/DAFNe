@@ -1,5 +1,10 @@
 # DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection
 
+ 	
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/dafne-a-one-stage-anchor-free-deep-model-for/one-stage-anchor-free-oriented-object-1)](https://paperswithcode.com/sota/one-stage-anchor-free-oriented-object-1?p=dafne-a-one-stage-anchor-free-deep-model-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/dafne-a-one-stage-anchor-free-deep-model-for/one-stage-anchor-free-oriented-object-2)](https://paperswithcode.com/sota/one-stage-anchor-free-oriented-object-2?p=dafne-a-one-stage-anchor-free-deep-model-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/dafne-a-one-stage-anchor-free-deep-model-for/one-stage-anchor-free-oriented-object-3)](https://paperswithcode.com/sota/one-stage-anchor-free-oriented-object-3?p=dafne-a-one-stage-anchor-free-deep-model-for)
+
 <img src="./res/header.png"/>
 
 Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection](https://arxiv.org/abs/2109.06148).
