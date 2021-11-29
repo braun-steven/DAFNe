@@ -99,7 +99,7 @@ def prepare(srcpath, dstpath, patchsize, overlap):
         srcpath_train,
         os.path.join(dstpath, f"train{patchsize}"),
         gap=overlap,
-        patchsize=patchsize,
+        subsize=patchsize,
         num_process=32,
     )
     split_train.splitdata(1)
@@ -110,7 +110,7 @@ def prepare(srcpath, dstpath, patchsize, overlap):
         srcpath_val,
         os.path.join(dstpath, f"val{patchsize}"),
         gap=overlap,
-        patchsize=patchsize,
+        subsize=patchsize,
         num_process=32,
     )
     split_val.splitdata(1)
@@ -121,7 +121,7 @@ def prepare(srcpath, dstpath, patchsize, overlap):
         srcpath_test,
         os.path.join(dstpath, f"test{patchsize}", "images"),
         gap=overlap,
-        patchsize=patchsize,
+        subsize=patchsize,
         num_process=32,
     )
     split_test.splitdata(1)
