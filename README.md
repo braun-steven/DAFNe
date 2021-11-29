@@ -7,6 +7,7 @@ Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Objec
 ## Datasets
 
 - DOTA 1.0/1.5: https://captain-whu.github.io/DOTA/index.html
+  - Note: See [./tools/prepare_dota/](./tools/prepare_dota/) for instructions on how to prepare the DOTA datasets.
 - HRSC2016: https://www.kaggle.com/guofeng/hrsc2016
 
 ## Docker Setup

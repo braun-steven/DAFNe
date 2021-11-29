@@ -1,0 +1,3 @@
+opencv-python==4.5.4.60
+shapely==1.8.0
+pillow==8.4.0
