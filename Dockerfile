@@ -36,6 +36,7 @@ RUN DEBIAN_FRONTEND="noninteractive" sudo apt -y update
 RUN DEBIAN_FRONTEND="noninteractive" sudo apt -y install swig
 RUN git clone https://github.com/CAPTAIN-WHU/DOTA_devkit && \
     cd DOTA_devkit && \
+    git checkout 99388551054be9a6dabb01c8bb2a7eb562d57b4f && \
     swig -c++ -python polyiou.i && \
     python setup.py install && \
     cd poly_nms_gpu && \
