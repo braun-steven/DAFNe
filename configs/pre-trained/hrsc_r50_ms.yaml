@@ -17,7 +17,7 @@ DATASETS:
   - hrsc_trainval
 DEBUG:
   OVERFIT_NUM_IMAGES: -1
-EXPERIMENT_NAME: hrsc-1.0-ms-8x-r101
+EXPERIMENT_NAME: hrsc-r50-ms
 GLOBAL:
   HACK: 1.0
 INPUT:
@@ -31,7 +31,7 @@ INPUT:
   HFLIP_TRAIN: true
   MASK_FORMAT: polygon
   MAX_SIZE_TEST: 1333
-  MAX_SIZE_TRAIN: 1200
+  MAX_SIZE_TRAIN: 1520
   MIN_AREA: 10
   MIN_SIDE: 2
   MIN_SIZE_TEST: 800
@@ -54,11 +54,11 @@ INPUT:
   - 1520
   MIN_SIZE_TRAIN_SAMPLING: choice
   RANDOM_FLIP: horizontal
-  RESIZE_HEIGHT_TEST: 800
-  RESIZE_HEIGHT_TRAIN: 800
+  RESIZE_HEIGHT_TEST: 0
+  RESIZE_HEIGHT_TRAIN: 0
   RESIZE_TYPE: shortest-edge
-  RESIZE_WIDTH_TEST: 512
-  RESIZE_WIDTH_TRAIN: 512
+  RESIZE_WIDTH_TEST: 0
+  RESIZE_WIDTH_TRAIN: 0
   ROTATION_AUG_ANGLES:
   - 0.0
   - 30.0
@@ -90,41 +90,8 @@ MODEL:
     ANTI_ALIAS: false
     FREEZE_AT: 2
     NAME: build_dafne_resnet_fpn_backbone
-  DEVICE: cuda
-  DLA:
-    CONV_BODY: DLA34
-    NORM: BN
-  FPN:
-    FUSE_TYPE: sum
-    IN_FEATURES:
-    - res3
-    - res4
-    - res5
-    NORM: ''
-    OUT_CHANNELS: 256
-  KEYPOINT_ON: false
-  LOAD_PROPOSALS: false
-  MASK_ON: false
-  META_ARCHITECTURE: OneStageDetector
-  MOBILENET: false
-  PANOPTIC_FPN:
-    COMBINE:
-      ENABLED: true
-      INSTANCES_CONFIDENCE_THRESH: 0.5
-      OVERLAP_THRESH: 0.5
-      STUFF_AREA_LIMIT: 4096
-    INSTANCE_LOSS_WEIGHT: 1.0
-  PIXEL_MEAN:
-  - 123.675
-  - 116.28
-  - 103.53
-  PIXEL_STD:
-  - 1.0
-  - 1.0
-  - 1.0
-  PROPOSAL_GENERATOR:
-    MIN_SIZE: 0
-    NAME: DAFNe
+  CONVNEXT:
+    SIZE: base
   DAFNE:
     CENTERNESS: oriented
     CENTERNESS_ALPHA: 5
@@ -160,7 +127,7 @@ MODEL:
     LOSS_LAMBDA:
       BOX: 1.0
       CENTER: 1.0
-      CLS: 1.0
+      CLS: 10.0
       CORNERS: 1.0
       CTR: 1.0
       LTRB: 1.0
@@ -184,7 +151,7 @@ MODEL:
     - 128
     - 256
     - 512
-    SORT_CORNERS: false
+    SORT_CORNERS: true
     SORT_CORNERS_DATALOADER: true
     THRESH_WITH_CTR: false
     TOP_LEVELS: 2
@@ -192,6 +159,41 @@ MODEL:
     USE_RELU: true
     USE_SCALE: true
     YIELD_PROPOSAL: false
+  DEVICE: cuda
+  DLA:
+    CONV_BODY: DLA34
+    NORM: BN
+  FPN:
+    FUSE_TYPE: sum
+    IN_FEATURES:
+    - res3
+    - res4
+    - res5
+    NORM: ''
+    OUT_CHANNELS: 256
+  KEYPOINT_ON: false
+  LOAD_PROPOSALS: false
+  MASK_ON: false
+  META_ARCHITECTURE: OneStageDetector
+  MOBILENET: false
+  PANOPTIC_FPN:
+    COMBINE:
+      ENABLED: true
+      INSTANCES_CONFIDENCE_THRESH: 0.5
+      OVERLAP_THRESH: 0.5
+      STUFF_AREA_LIMIT: 4096
+    INSTANCE_LOSS_WEIGHT: 1.0
+  PIXEL_MEAN:
+  - 123.675
+  - 116.28
+  - 103.53
+  PIXEL_STD:
+  - 1.0
+  - 1.0
+  - 1.0
+  PROPOSAL_GENERATOR:
+    MIN_SIZE: 0
+    NAME: DAFNe
   RESNETS:
     DEFORM_INTERVAL: 1
     DEFORM_MODULATED: false
@@ -201,7 +203,7 @@ MODEL:
     - false
     - false
     - false
-    DEPTH: 101
+    DEPTH: 50
     NORM: FrozenBN
     NUM_GROUPS: 1
     OUT_FEATURES:
@@ -215,7 +217,7 @@ MODEL:
     WIDTH_PER_GROUP: 64
   RETINANET:
     BBOX_REG_LOSS_TYPE: smooth_l1
-    BBOX_REG_WEIGHTS: &id002
+    BBOX_REG_WEIGHTS:
     - 1.0
     - 1.0
     - 1.0
@@ -245,8 +247,7 @@ MODEL:
     TOPK_CANDIDATES_TEST: 1000
   ROI_BOX_CASCADE_HEAD:
     BBOX_REG_WEIGHTS:
-    - &id001
-      - 10.0
+    - - 10.0
       - 10.0
       - 5.0
       - 5.0
@@ -265,7 +266,11 @@ MODEL:
   ROI_BOX_HEAD:
     BBOX_REG_LOSS_TYPE: smooth_l1
     BBOX_REG_LOSS_WEIGHT: 1.0
-    BBOX_REG_WEIGHTS: *id001
+    BBOX_REG_WEIGHTS:
+    - 10.0
+    - 10.0
+    - 5.0
+    - 5.0
     CLS_AGNOSTIC_BBOX_REG: false
     CONV_DIM: 256
     FC_DIM: 1024
@@ -324,8 +329,14 @@ MODEL:
     BATCH_SIZE_PER_IMAGE: 256
     BBOX_REG_LOSS_TYPE: smooth_l1
     BBOX_REG_LOSS_WEIGHT: 1.0
-    BBOX_REG_WEIGHTS: *id002
+    BBOX_REG_WEIGHTS:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
     BOUNDARY_THRESH: -1
+    CONV_DIMS:
+    - -1
     HEAD_NAME: StandardRPNHead
     IN_FEATURES:
     - res4
@@ -360,8 +371,8 @@ MODEL:
   TOP_MODULE:
     DIM: 16
     NAME: ''
-  WEIGHTS: detectron2://ImageNetPretrained/MSRA/R-101.pkl
-OUTPUT_DIR: /app/results/rafos/21-05-10_10:05_hrsc-1.0-ms-8x-r101
+  WEIGHTS: detectron2://ImageNetPretrained/MSRA/R-50.pkl
+OUTPUT_DIR: /app/results/dafne/22-02-17_09:13_hrsc-r50-ms_error
 SEED: -1
 SOLVER:
   AMP:
@@ -377,15 +388,15 @@ SOLVER:
   GAMMA: 0.1
   IMS_PER_BATCH: 8
   LR_SCHEDULER_NAME: WarmupMultiStepLR
-  MAX_ITER: 720000
+  MAX_ITER: 360000
   MOMENTUM: 0.9
   NESTEROV: false
   OPTIMIZER: sgd
   REFERENCE_WORLD_SIZE: 4
   STEPS:
-  - 480000
-  - 640000
-  WARMUP_FACTOR: 0.01
+  - 240000
+  - 320000
+  WARMUP_FACTOR: 0.001
   WARMUP_ITERS: 2000
   WARMUP_METHOD: linear
   WEIGHT_DECAY: 0.0001
@@ -396,7 +407,7 @@ TEST:
     ENABLED: true
     FLIP: true
     HFLIP: true
-    MAX_SIZE: 1200
+    MAX_SIZE: 1520
     MIN_SIZES:
     - 320
     - 400

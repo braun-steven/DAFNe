@@ -1,0 +1,16 @@
+_BASE_: "../../hrsc/base_val.yaml"
+MODEL:
+  DAFNE:
+    CENTERNESS: "none"
+    CORNER_PREDICTION: "direct"
+
+INPUT:
+  RESIZE_TYPE: "shortest-edge"
+  MIN_SIZE_TRAIN: (800,)
+  MAX_SIZE_TRAIN: 800
+
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TEST: 800
+
+TEST:
+  EVAL_PERIOD: 5000

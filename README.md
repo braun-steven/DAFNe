@@ -1,9 +1,9 @@
-# DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection
+# DAFNe: A One-Stage Anchor-Free Approach for Oriented Object Detection
 
 
 <img src="./res/header.png"/>
 
-Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection](https://arxiv.org/abs/2109.06148).
+Code for our Paper [DAFNe: A One-Stage Anchor-Free Approach for Oriented Object Detection](https://arxiv.org/abs/2109.06148).
  	
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/dafne-a-one-stage-anchor-free-deep-model-for/one-stage-anchor-free-oriented-object-1)](https://paperswithcode.com/sota/one-stage-anchor-free-oriented-object-1?p=dafne-a-one-stage-anchor-free-deep-model-for)</br>
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/dafne-a-one-stage-anchor-free-deep-model-for/one-stage-anchor-free-oriented-object-2)](https://paperswithcode.com/sota/one-stage-anchor-free-oriented-object-2?p=dafne-a-one-stage-anchor-free-deep-model-for)</br>
@@ -11,6 +11,7 @@ Code for our Paper [DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Objec
 
 ## Datasets
 
+- UCAS-AOD: https://hyper.ai/datasets/5419
 - DOTA 1.0/1.5: https://captain-whu.github.io/DOTA/index.html
   - Note: See [./tools/prepare_dota/](./tools/prepare_dota/) for instructions on how to prepare the DOTA datasets.
 - HRSC2016: https://www.kaggle.com/guofeng/hrsc2016
@@ -25,7 +26,7 @@ docker build -t dafne .
 
 ## Training
 
-Check out `./configs/` for different pre-defined configurations for the DOTA 1.0, DOTA 1.5 and HRSC2016 datasets. Use these paths as argument for the `--config-file` option below.
+Check out `./configs/pre-trained/` for different pre-defined configurations for the DOTA 1.0, DOTA 1.5, UCAS-AOD, and HRSC2016 datasets. Use these paths as argument for the `--config-file` option below.
 
 
 ### With Docker
@@ -44,11 +45,12 @@ NVIDIA_VISIBLE_DEVICES=0,1,2,3 ./tools/plain_train_net.py --num-gpus 4 --config-
 
 ## Pre-Trained Weights
 
-| Dataset  | mAP (%) | Config                                                          | Weights                                                                                               |
-|----------|---------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| HRSC2016 | 87.76   | [hrsc_r101_ms](./configs/pre-trained/hrsc_r101_ms.yaml)         | [hrsc-ms.pth](https://drive.google.com/file/d/1mzqcPTADlLpOJCTSanaweG-mgAbHtSOX/view?usp=sharing)     |
-| DOTA 1.0 | 76.95   | [dota-1.0_r101_ms](./configs/pre-trained/dota-1.0_r101_ms.yaml) | [dota-1.0-ms.pth](https://drive.google.com/file/d/1-lgSLhKQSZBogI2YD0r64wjJV6k2xL4E/view?usp=sharing) |
-| DOTA 1.5 | 71.99   | [dota-1.5_r101_ms](./configs/pre-trained/dota-1.5_r101_ms.yaml) | [dota-1.5-ms.pth](https://drive.google.com/file/d/1MQbTngieoWh-DcJL-z55RnI3PUNeSvBv/view?usp=sharing) |
+| Dataset  | mAP (%) | Config                                                          | Weights                                                                                                    |
+|----------|---------|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| UCAS-AOD | 89.65   | [ucas_aod_r101_ms](./configs/pre-trained/ucas_aod_r101_ms.yaml) | [ucas-aod-r101-ms.pth](https://drive.google.com/file/d/1snC7IU-ud-d6L_AxbDx_HG8QBINP2_RO/view?usp=sharing) |
+| HRSC2016 | 89.76   | [hrsc_r50_ms](./configs/pre-trained/hrsc_r50_ms.yaml)           | [hrsc-r50-ms.pth](https://drive.google.com/file/d/10i3pHxiHgjJGzJoZK-HtNdsAyfGD5Ydj/view?usp=sharing)      |
+| DOTA 1.0 | 76.95   | [dota-1.0_r101_ms](./configs/pre-trained/dota-1.0_r101_ms.yaml) | [dota-1.0-r101-ms.pth](https://drive.google.com/file/d/1-lgSLhKQSZBogI2YD0r64wjJV6k2xL4E/view?usp=sharing) |
+| DOTA 1.5 | 71.99   | [dota-1.5_r101_ms](./configs/pre-trained/dota-1.5_r101_ms.yaml) | [dota-1.5-r101-ms.pth](https://drive.google.com/file/d/1MQbTngieoWh-DcJL-z55RnI3PUNeSvBv/view?usp=sharing) |
 
 
 ### Pre-Trained Weights Usage with Docker
@@ -67,7 +69,7 @@ NVIDIA_VISIBLE_DEVICES=0 ./tools/plain_train_net.py --num-gpus 1 --config-file <
 
 ``` bibtex
 @misc{lang2021dafne,
-      title={DAFNe: A One-Stage Anchor-Free Deep Model for Oriented Object Detection}, 
+      title={DAFNe: A One-Stage Anchor-Free Approach for Oriented Object Detection}, 
       author={Steven Lang and Fabrizio Ventola and Kristian Kersting},
       year={2021},
       eprint={2109.06148},

@@ -146,3 +146,6 @@ _C.MODEL.DLA.CONV_BODY = "DLA34"
 # If true, dota 1.5 will be loaded with the same classes as dota 1.0
 # to allow for training dota 1.0 in conjunction with the 1.5 annotations
 _C.DATASETS.DOTA_REMOVE_CONTAINER_CRANE = False
+
+_C.MODEL.CONVNEXT = CN()
+_C.MODEL.CONVNEXT.SIZE = "base"

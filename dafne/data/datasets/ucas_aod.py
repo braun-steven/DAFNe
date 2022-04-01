@@ -8,6 +8,7 @@ from detectron2.data import (
     DatasetMapper,
     transforms as T,
 )
+import cv2
 import xml.etree.ElementTree as ET
 
 from detectron2.structures import BoxMode, PolygonMasks, RotatedBoxes
@@ -31,7 +32,26 @@ import seaborn as sns
 
 import os
 
+
 logger = logging.getLogger(__name__)
+
+
+def load_annotation(root_dir, img_id):
+    filename = os.path.join(root_dir, "Annotations", img_id + ".txt")
+
+    boxes, gt_classes = [], []
+    with open(filename, "r", encoding="utf-8-sig") as f:
+        content = f.read()
+        objects = content.split("\n")
+        for obj in objects:
+            if len(obj) != 0:
+                class_name = obj.split()[0]
+                box = obj.split()[1:9]
+                label = name2label[class_name]
+                box = [eval(x) for x in box]
+                boxes.append(box)
+                gt_classes.append(label)
+    return {"boxes": np.array(boxes, dtype=np.int32), "gt_classes": np.array(gt_classes)}
 
 
 def xywha2xy4(xywha):  # a represents the angle(degree), clockwise, a=0 along the X axis
@@ -46,13 +66,69 @@ def norm_angle(angle, range=[-np.pi / 4, np.pi]):
     return (angle - range[0]) % range[1] + range[0]
 
 
-NAMES = ["ship"]
+NAMES = ["__background__", "car", "airplane"]
 
 label2name = dict((label, name) for label, name in enumerate(NAMES))
 name2label = dict((name, label) for label, name in enumerate(NAMES))
 
 
-def load_hrsc(root, image_set, cfg):
+def parse_annotation(img_id: str, root: str):
+    anno = load_annotation(root_dir=root, img_id=img_id)
+
+    # Construct image and annotation path
+    img_path = os.path.join(root, "AllImages", f"{img_id}.png")
+    # anno_path = os.path.join(root, "Annotations", f"{img_id}.txt")
+
+    # Create new data record for each image
+    record = {}
+    record["file_name"] = img_path
+    record["image_id"] = img_id[1:]  # Strip starting letter "P"
+
+    img = cv2.imread(img_path)
+    record["width"] = img.shape[1]
+    record["height"] = img.shape[0]
+
+    # Collect annotations
+    objs = []
+    num_objects = anno["boxes"].shape[0]
+    for i in range(num_objects):
+        obj = {}
+        obbox = anno["boxes"][i]
+        label = anno["gt_classes"][i] - 1
+
+        if label == -1:
+            # Skip background
+            continue
+
+        bbox = np.array(obbox).reshape(1, -1)
+        xmin, xmax = bbox[:, 0::2].min(), bbox[:, 0::2].max()
+        ymin, ymax = bbox[:, 1::2].min(), bbox[:, 1::2].max()
+        w = np.abs(xmax - xmin)
+        h = np.abs(ymax - ymin)
+
+        ar = np.maximum(w / (h + 1e-16), h / (w + 1e-16))
+        is_valid_box = (w > 2) & (h > 2) & (ar < 30)
+        if not is_valid_box:
+            continue
+
+        obj["bbox"] = [xmin, ymin, w, h]
+        obj["bbox_mode"] = BoxMode.XYWH_ABS
+        obj["area"] = w * h
+        area = w * h
+        bbox = np.array([xmin, ymin, xmax, ymax])
+
+        obj["segmentation"] = obbox.reshape(1, -1).tolist()
+        obj["category_id"] = label
+        obj["bbox"] = bbox
+        obj["bbox_mode"] = BoxMode.XYXY_ABS
+        obj["difficult"] = 0
+        obj["area"] = area
+        objs.append(obj)
+    record["annotations"] = objs
+    return record
+
+
+def load_ucas_aod(root, image_set, cfg):
     image_sets = [image_set] if isinstance(image_set, str) else image_set
     dataset_dicts = []
     for image_set in image_sets:
@@ -65,70 +141,13 @@ def load_hrsc(root, image_set, cfg):
             lines = lines[: cfg.DEBUG.OVERFIT_NUM_IMAGES]
 
         for img_id in lines:
-            img_id = int(img_id)
-            # Construct image and annotation path
-            img_path = os.path.join(root, "images", f"{img_id}.bmp")
-            anno_path = os.path.join(root, "labelXml", f"{img_id}.xml")
-
-            # Create new data record for each image
-            record = {}
-            record["file_name"] = img_path
-            record["image_id"] = img_id
-
-            # Parse annotation
-            anno_tree = ET.parse(anno_path)
-            anno_root = anno_tree.getroot()
-
-            record["width"] = int(anno_root.find("Img_SizeWidth").text)
-            record["height"] = int(anno_root.find("Img_SizeHeight").text)
-
-            # # Skip invalid paths
-            # if not anno_path:
-            #     continue
-
-            # Collect annotations
-            objs = []
-            for obj in anno_root.findall("HRSC_Objects")[0].findall("HRSC_Object"):
-                label = name2label["ship"]
-                difficult = int(obj.find("difficult").text)
-                bbox = []
-                for key in ["mbox_cx", "mbox_cy", "mbox_w", "mbox_h", "mbox_ang"]:
-                    bbox.append(obj.find(key).text)
-                # TODO: check whether it is necessary to use int
-                # Coordinates may be float type
-                cx, cy, w, h, a = list(map(float, bbox))
-                # set w the long side and h the short side
-                # new_w, new_h = max(w, h), min(w, h)
-                # # adjust angle
-                # a = a if w > h else a + np.pi / 2
-                # normalize angle to [-np.pi/4, pi/4*3]
-                # a = norm_angle(a)
-                bbox = [cx, cy, w, h, a]
-
-                obj = {}
-                obbox = xywha2xy4(bbox).reshape(1, -1).tolist()
-                obj["segmentation"] = obbox
-                obj["category_id"] = label
-                obj["difficult"] = difficult
-
-                bbox = np.array(obbox)
-                xmin, xmax = bbox[:, 0::2].min(), bbox[:, 0::2].max()
-                ymin, ymax = bbox[:, 1::2].min(), bbox[:, 1::2].max()
-                w = np.abs(xmax - xmin)
-                h = np.abs(ymax - ymin)
-                obj["bbox"] = [xmin, ymin, w, h]
-                obj["bbox_mode"] = BoxMode.XYWH_ABS
-                obj["area"] = w * h
-
-                objs.append(obj)
-
-            record["annotations"] = objs
+            record = parse_annotation(img_id, root)
             dataset_dicts.append(record)
 
     return dataset_dicts
 
 
-def register_hrsc_instances(name, split, metadata, image_root, cfg):
+def register_ucas_aod_instances(name, split, metadata, image_root, cfg):
     """
     Register a dataset in COCO's json annotation format for
     instance detection, instance segmentation and keypoint detection.
@@ -149,7 +168,7 @@ def register_hrsc_instances(name, split, metadata, image_root, cfg):
 
     DatasetCatalog.register(
         name,
-        lambda: load_hrsc(
+        lambda: load_ucas_aod(
             root=metadata["root_dir"],
             image_set=split,
             cfg=cfg,
@@ -158,38 +177,16 @@ def register_hrsc_instances(name, split, metadata, image_root, cfg):
 
     # 2. Optionally, add metadata about this dataset,
     # since they might be useful in evaluation, visualization or logging
-    MetadataCatalog.get(name).set(image_root=image_root, evaluator_type="hrsc", **metadata)
-
-
-class HrscDatasetMapper(DatasetMapper):
-    def __call__(self, dataset_dict):
-        result = super().__call__(dataset_dict)
-        if "instances" in result:
-            instances = result["instances"]
-            if instances.has("gt_masks") and len(instances.gt_masks) > 0:
-                gt_masks = np.stack(instances.gt_masks).squeeze(1)
-                gt_corners = torch.tensor(gt_masks, dtype=instances.gt_boxes.tensor.dtype)
-
-                # Sort corners
-                gt_corners = sort_quadrilateral(gt_corners)
-
-                instances.gt_corners = gt_corners
-                instances.gt_corners_area = instances.gt_masks.area().float()
-            else:
-                instances.gt_corners = torch.empty(0, 8)
-                instances.gt_corners_area = torch.empty(0)
-            result["instances"] = instances
-
-        return result
+    MetadataCatalog.get(name).set(image_root=image_root, evaluator_type="ucas_aod", **metadata)
 
 
 def _make_datasets_dict():
     datasets_dict = {}
     # Construct datasets dict from currently available datasets
     for split in ["train", "val", "test", "trainval"]:
-        name = f"hrsc_{split}"
+        name = f"ucas_aod_{split}"
         datasets_dict[name] = {
-            "root_dir": "hrsc",
+            "root_dir": "UCAS-AOD",
             "img_dir": "images",
             "ann_file": f"ImageSets/{split}.txt",
             "split": split,
@@ -199,8 +196,8 @@ def _make_datasets_dict():
     return datasets_dict
 
 
-def register_hrsc(cfg):
-    """Setup method to register the hrsc dataset."""
+def register_ucas_aod(cfg):
+    """Setup method to register the ucas_aod dataset."""
     datasets_dict = _make_datasets_dict()
 
     # Get the data directory
@@ -209,7 +206,7 @@ def register_hrsc(cfg):
     for dataset_name, d in datasets_dict.items():
 
         def reg(name):
-            register_hrsc_instances(
+            register_ucas_aod_instances(
                 name=name,
                 metadata={
                     "is_test": d["is_test"],

@@ -18,11 +18,6 @@ You may want to write your own script with your datasets and other customization
 Compared to "train_net.py", this script supports fewer default features.
 It also includes fewer abstraction, therefore is easier to add custom logic.
 """
-from pprint import pformat
-from dafne.evaluation.hrsc_evaluation import HrscEvaluator
-from dafne.data.datasets.hrsc2016 import register_hrsc
-from dafne.data.datasets.dafne_dataset_mapper import DAFNeDatasetMapper
-from setproctitle import setproctitle
 import contextlib
 import logging
 import os
@@ -30,46 +25,42 @@ import shutil
 import time
 import traceback
 from collections import OrderedDict
-from typing import Any, Dict, List, Set
-from detectron2.utils.comm import is_main_process, synchronize
-import numpy as np
-import torch
-from torch.nn.parallel import DistributedDataParallel
-
 from pathlib import Path
+from pprint import pformat
+from typing import Any, Dict, List, Set
+from dafne.data.datasets.icdar15 import register_icdar15
 
 import detectron2.utils.comm as comm
+import numpy as np
+import torch
+from dafne.config import get_cfg
+from dafne.data.datasets.dafne_dataset_mapper import DAFNeDatasetMapper
+from dafne.data.datasets.dota import register_dota
+from dafne.data.datasets.hrsc2016 import register_hrsc
+from dafne.data.datasets.ucas_aod import register_ucas_aod
+from dafne.evaluation.dota_evaluation import DotaEvaluator
+from dafne.evaluation.hrsc_evaluation import HrscEvaluator
+from dafne.evaluation.icdar15_evaluation import Icdar15Evaluator
+from dafne.evaluation.ucas_aod_evaluation import UcasAodEvaluator
+from dafne.modeling.tta import OneStageRCNNWithTTA
+from dafne.utils.mail import send_mail_success
+from dafne.utils.rtpt import RTPT
 from detectron2.checkpoint import DetectionCheckpointer, PeriodicCheckpointer
-from detectron2.config import CfgNode, get_cfg
+from detectron2.config import CfgNode
 from detectron2.data import (
-    MetadataCatalog,
     build_detection_test_loader,
     build_detection_train_loader,
 )
-
 from detectron2.data import transforms as T
-from detectron2.engine import (
-    DefaultTrainer,
-    default_argument_parser,
-    default_setup,
-    hooks,
-    launch,
-)
+from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, hooks, launch
 from detectron2.engine.defaults import DefaultTrainer
 from detectron2.evaluation import (
-    CityscapesInstanceEvaluator,
-    CityscapesSemSegEvaluator,
-    COCOEvaluator,
-    COCOPanopticEvaluator,
     DatasetEvaluators,
-    LVISEvaluator,
-    PascalVOCDetectionEvaluator,
-    SemSegEvaluator,
     inference_on_dataset,
-    print_csv_format,
 )
 from detectron2.modeling import build_model
-from detectron2.solver import build_lr_scheduler, build_optimizer
+from detectron2.solver import build_lr_scheduler
+from detectron2.utils.comm import synchronize
 from detectron2.utils.events import (
     CommonMetricPrinter,
     EventStorage,
@@ -77,12 +68,8 @@ from detectron2.utils.events import (
     TensorboardXWriter,
 )
 from detectron2.utils.logger import setup_logger
-from dafne.config import get_cfg
-from dafne.data.datasets.dota import register_dota
-from dafne.evaluation.dota_evaluation import DotaEvaluator
-from dafne.modeling.tta import OneStageRCNNWithTTA
-from dafne.utils.mail import send_mail_error, send_mail_success
-from dafne.utils.rtpt import RTPT
+from setproctitle import setproctitle
+from torch.nn.parallel import DistributedDataParallel
 
 logger = logging.getLogger("detectron2")
 
@@ -143,6 +130,7 @@ def build_optimizer_custom(cfg: CfgNode, model: torch.nn.Module) -> torch.optim.
 
 def detect_anomaly(losses, loss_dict, iter):
     if not torch.isfinite(losses).all():
+        breakpoint()
         raise FloatingPointError(
             "Loss became infinite or NaN at iteration={}!\nloss_dict = {}".format(iter, loss_dict)
         )
@@ -206,6 +194,21 @@ def get_evaluator(cfg, dataset_name, output_folder=None):
             distributed=True,
             output_dir=output_folder,
         )
+    elif "icdar" in dataset_name.lower():
+        evaluator = Icdar15Evaluator(
+            dataset_name=dataset_name,
+            cfg=cfg,
+            distributed=True,
+            output_dir=output_folder,
+        )
+    elif "ucas" in dataset_name.lower():
+        evaluator = UcasAodEvaluator(
+            dataset_name=dataset_name,
+            cfg=cfg,
+            distributed=True,
+            output_dir=output_folder,
+        )
+
     else:
         raise RuntimeError()
 
@@ -436,8 +439,6 @@ def do_train(cfg, model, resume=False):
     # cfg_mini_test.DATASETS.TEST = (cfg.DATASETS.TEST[0] + "_mini",)
     # cfg_mini_test.freeze()
 
-
-
     logger.info("Starting training from iteration {}".format(start_iter))
     with EventStorage(start_iter) as storage:
         data_time = time.perf_counter()
@@ -470,7 +471,6 @@ def do_train(cfg, model, resume=False):
 
             scheduler.step()
 
-
             if (
                 cfg.TEST.EVAL_PERIOD > 0
                 and iteration % cfg.TEST.EVAL_PERIOD == 0
@@ -490,7 +490,6 @@ def do_train(cfg, model, resume=False):
             # Update process title
             progress = iteration / max_iter * 100
             rtpt.step(subtitle=f"[{progress:0>2.0f}%]")
-
 
 
 def is_debug_session(cfg) -> bool:
@@ -544,6 +543,7 @@ def setup(args):
     setup_logger(output=cfg.OUTPUT_DIR, distributed_rank=comm.get_rank(), name="dafne")
     return cfg
 
+
 def custom_auto_scale_workers(cfg, num_workers):
     cfg = cfg.clone()
     frozen = cfg.is_frozen()
@@ -556,17 +556,19 @@ def custom_auto_scale_workers(cfg, num_workers):
 
     return cfg
 
+
 def main(args):
     cfg = setup(args)
     # Scale config according to number of GPUs
     cfg = DefaultTrainer.auto_scale_workers(cfg, comm.get_world_size())
-
 
     logger = logging.getLogger(__name__)
 
     # Register the datasets
     register_dota(cfg)
     register_hrsc(cfg)
+    register_ucas_aod(cfg)
+    register_icdar15(cfg)
 
     model = build_model(cfg)
 
@@ -589,7 +591,9 @@ def main(args):
     distributed = comm.get_world_size() > 1
     if distributed:
         model = DistributedDataParallel(
-            model, device_ids=[comm.get_local_rank()], broadcast_buffers=False,
+            model,
+            device_ids=[comm.get_local_rank()],
+            broadcast_buffers=False,
         )
 
     try:
@@ -609,19 +613,20 @@ def main(args):
         return results
 
     except KeyboardInterrupt:  # Catch keyboard interruptions
+        pass
 
-        # Rename output dir
-        src = cfg.OUTPUT_DIR
-        dst = src + "_interrupted"
+        # # Rename output dir
+        # src = cfg.OUTPUT_DIR
+        # dst = src + "_interrupted"
 
-        logger.error(f"Keyboard interruption catched.")
-        logger.error(f"Moving output directory from")
-        logger.error(src)
-        logger.error("to")
-        logger.error(dst)
+        # logger.error(f"Keyboard interruption catched.")
+        # logger.error(f"Moving output directory from")
+        # logger.error(src)
+        # logger.error("to")
+        # logger.error(dst)
 
-        if comm.is_main_process():
-            shutil.move(src, dst)
+        # if comm.is_main_process():
+        #     shutil.move(src, dst)
 
     except Exception as e:
         # Log error message
@@ -632,7 +637,7 @@ def main(args):
 
         # Rename output dir
         src = cfg.OUTPUT_DIR
-        dst = src + "_error"
+        # dst = src + "_error"
 
         if comm.is_main_process():
             # send_mail_error(cfg, args, errormsg)
@@ -641,13 +646,12 @@ def main(args):
             with open(os.path.join(cfg.OUTPUT_DIR, "error.txt"), "w") as f:
                 f.write(errormsg)
 
-            shutil.move(src, dst)
+        #     shutil.move(src, dst)
 
-
-        logger.error("Moving output directory from")
-        logger.error(src)
-        logger.error("to")
-        logger.error(dst)
+        # logger.error("Moving output directory from")
+        # logger.error(src)
+        # logger.error("to")
+        # logger.error(dst)
         raise e
     finally:
         synchronize()

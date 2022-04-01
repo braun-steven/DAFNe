@@ -435,7 +435,8 @@ def run_test():
     lines = [
         f"docker run {DOCKER_ARGS}",
         "python tools/plain_train_net.py",
-        "--eval-only --resume",
+        "--eval-only",
+        "--resume" if ARGS.resume else "",
         f"--config-file {config_file}",
         f"--num-gpus {num_gpus}",
         opts,

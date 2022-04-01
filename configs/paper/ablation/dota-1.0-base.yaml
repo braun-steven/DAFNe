@@ -1,0 +1,8 @@
+_BASE_: "../../dota-1.0/1024.yaml"
+MODEL:
+  DAFNE:
+    CENTERNESS: "none"
+    CORNER_PREDICTION: "direct"
+
+TEST:
+  EVAL_PERIOD: 5000
